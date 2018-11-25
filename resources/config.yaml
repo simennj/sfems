@@ -1,0 +1,35 @@
+viewWidth: 2000
+analyzer: corotational
+force:
+  - node: middle
+    type: global
+    degreeOfFreedom: 1 # 0=axial, 1=normal, 2=rotational
+    magnitude: -10000 # 109956
+elementCount: 20
+curve:
+#  type: line
+#  length: 1000
+#  height: 0
+  type: arch
+  radius: 1000
+  height: 400
+youngsModulus: 2.1e+5
+crossSectionArea: 10
+momentOfIntertia: 4166
+boundaryConditions:
+  - globalDegreeOfFreedom: 0
+    value: 0
+  - globalDegreeOfFreedom: 1
+    value: 0
+#  - globalDegreeOfFreedom: 2
+#    value: 0
+  - globalDegreeOfFreedom: -2
+    value: 0
+  - globalDegreeOfFreedom: -3
+    value: 0
+iterator:
+  type: newton
+  tolerance: 1e-2
+#  type: simple
+  increments: 10
+  maxIterationsPerIncrement: 200
