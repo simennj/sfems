@@ -1,15 +1,14 @@
 viewWidth: 2000
-analyzer: corotational
 force:
   - node: middle
     type: global
     degreeOfFreedom: 1 # 0=axial, 1=normal, 2=rotational
-    magnitude: -10000 # 109956
+    magnitude: -14000 # 109956
 elementCount: 20
 curve:
 #  type: line
 #  length: 1000
-#  height: 0
+#  height: 400
   type: arch
   radius: 1000
   height: 400
@@ -29,7 +28,11 @@ boundaryConditions:
     value: 0
 iterator:
   type: newton
-  tolerance: 1e-2
-#  type: simple
+#  type: arclength
   increments: 10
+#  stepSize: 75
+  tolerance: 1e-6
   maxIterationsPerIncrement: 200
+logging:
+  node: middle
+  degreeOfFreedom: 1

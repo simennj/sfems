@@ -3,12 +3,10 @@
 #include <yaml-cpp/yaml.h>
 #include "graphics/graphics.hpp"
 #include "utils/arch.hpp"
-#include "calculations/linear.hpp"
 #include "utils/fileUtils.hpp"
-#include "utils/logFunctions.hpp"
 #include "calculations/BeamElement.hpp"
-#include "calculations/corotational.hpp"
-#include "calculations/iterator.hpp"
+#include "calculations/logger.hpp"
+#include "calculations/structure.hpp"
 
 extern "C" {
     #include <time.h>
@@ -18,18 +16,16 @@ extern "C" {
 double initialViewWidth;
 double viewWidth;
 double increments;
-std::unique_ptr<Analyzer> analyzer; // TODO: find a cleaner way to handle analyzer state?
+std::unique_ptr<Structure> structure;
 
-std::unique_ptr<Iterator> createIterator(YAML::Node config) {
-    int maxIterationsPerIncrement = config["maxIterationsPerIncrement"].as<int>();
-    if (config["type"].as<std::string>() == "newton") {
-        return std::make_unique<NewtonIterator>(maxIterationsPerIncrement, config["tolerance"].as<double>());
-    } else {
-        return std::make_unique<SimpleIterator>(maxIterationsPerIncrement);
-    }
-}
+int maxIterations;
+double tolerance;
 
-std::unique_ptr<Analyzer> loadStuff() {
+bool arclength;
+
+double stepSize;
+
+std::unique_ptr<Structure> loadStuff() {
     YAML::Node config = YAML::LoadFile("config.yaml");
 
     auto curveConfig = config["curve"];
@@ -51,10 +47,12 @@ std::unique_ptr<Analyzer> loadStuff() {
                         config["crossSectionArea"].as<double>(),
                         config["momentOfIntertia"].as<double>()
                 };
+    int degreesOfFreedom = (elementCount+1)*3;
     std::vector<BoundaryCondition> boundaryConditions{};
     for (auto boundaryCondition : config["boundaryConditions"]) {
+        int degreeOfFreedom = boundaryCondition["globalDegreeOfFreedom"].as<int>();
         boundaryConditions.push_back(BoundaryCondition{
-            boundaryCondition["globalDegreeOfFreedom"].as<int>(),
+            degreeOfFreedom < 0 ? degreesOfFreedom + degreeOfFreedom : degreeOfFreedom,
             boundaryCondition["value"].as<double>()
         });
     }
@@ -81,18 +79,25 @@ std::unique_ptr<Analyzer> loadStuff() {
         });
     }
 
+    unsigned int nodeToLog;
+    if (config["logging"]["node"].as<std::string>() == "middle")
+        nodeToLog = elementCount/2;
+    else
+        nodeToLog = config["logging"]["node"].as<unsigned int>();
+    Logger logger = Logger(nodeToLog, config["logging"]["degreeOfFreedom"].as<unsigned int>());
+
     viewWidth = initialViewWidth = config["viewWidth"].as<double>();
     auto iteratorConfig = config["iterator"];
     increments = iteratorConfig["increments"].as<int>();
-    std::unique_ptr<Iterator> iterator = createIterator(iteratorConfig);
+    maxIterations = iteratorConfig["maxIterationsPerIncrement"].as<int>();
+    tolerance = iteratorConfig["tolerance"].as<double>();
+    arclength = !(iteratorConfig["type"].as<std::string>() == "newton");
+    if (iteratorConfig["stepSize"].IsDefined())
+        stepSize = iteratorConfig["stepSize"].as<double>();
+    else
+        stepSize = 1.0/increments;
 
-    if (config["analyzer"].as<std::string>() == "corotational") {
-        return std::make_unique<Corotational>(vertices, properties, boundaryConditions, forceVector, std::move(iterator));
-    } else {
-        return std::make_unique<Linear>(vertices, properties, boundaryConditions, forceVector, std::move(iterator));
-    }
-
-//    logVertices(analyzer.getVertices());
+    return std::make_unique<Structure>(vertices, properties, boundaryConditions, forceVector, std::move(logger));
 }
 
 /*
@@ -106,31 +111,18 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
                 glfwSetWindowShouldClose(window, GL_TRUE);
                 break;
             case GLFW_KEY_R:
-                analyzer = loadStuff();
+                structure = loadStuff();
                 // Reloads shaders and ui points from shader, vertices and indices files
                 graphics_reload();
-                // Reinitializes PID controller with values from constants file
-                break;
-            case GLFW_KEY_DOWN:
-                analyzer->setForceScale(analyzer->getForceScale()+.05);
-//                std::cout << "localForces: " << analyzer->getLocalForces().transpose()*analyzer->getForceScale() << std::endl;
-//                std::cout << "globalForces: " << analyzer->getGlobalForces().transpose()*analyzer->getForceScale()  << std::endl;
-                break;
-            case GLFW_KEY_UP:
-                analyzer->setForceScale(analyzer->getForceScale()-.05);
-//                std::cout << "localForces: " << analyzer->getLocalForces().transpose()*analyzer->getForceScale()  << std::endl;
-//                std::cout << "globalForces: " << analyzer->getGlobalForces().transpose()*analyzer->getForceScale()  << std::endl;
                 break;
             case GLFW_KEY_SPACE:
-                analyzer->iterate(increments);//1.0/increments);
-//                analyzer->setForceScale(analyzer->getForceScale()+1);
-//                std::cout << "localForces: " << analyzer->getLocalForces().transpose()*analyzer->getForceScale()  << std::endl;
-//                std::cout << "globalForces: " << analyzer->getGlobalForces().transpose()*analyzer->getForceScale()  << std::endl;
-//                analyzer->update(0.01, force);
-//                force += initialForce;
+                if (arclength)
+                    structure->arcLength(stepSize, tolerance, maxIterations);
+                else
+                    structure->newton(stepSize, tolerance, maxIterations);
                 break;
             case GLFW_KEY_0: {
-                std::vector<double> vertices = analyzer->getVertices();
+                std::vector<double> vertices = structure->getVertices();
                 std::transform(vertices.begin(), vertices.end(), vertices.begin(),
                                std::abs<double>);
 
@@ -138,21 +130,14 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
                         *std::max_element(vertices.begin(), vertices.end())*2;
                 break;
             }
-            case GLFW_KEY_RIGHT:
-                analyzer->update();
-                break;
             case GLFW_KEY_I: {
                 //iterate
                 for (int i = 0; i < increments; ++i) {
-                    const auto diverging = analyzer->iterate(increments);//1.0 / increments);
-                    if (diverging) break;
-                }
-                break;
-            }
-            case GLFW_KEY_J: {
-                //iterate
-                for (int i = 0; i < 100; ++i) {
-                    const auto diverging = analyzer->iterate(increments);//1.0 / increments);
+                    bool diverging;
+                    if (arclength)
+                        diverging = structure->arcLength(stepSize, tolerance, maxIterations);
+                    else
+                        diverging = structure->newton(stepSize, tolerance, maxIterations);
                     if (diverging) break;
                 }
                 break;
@@ -176,13 +161,12 @@ int main(int argc, char **argv) {
     window_init(key_callback);
     graphics_init((void *(*)(const char)) glfwGetProcAddress);
 
-    analyzer = loadStuff();
-//    analyzer->update();
+    structure = loadStuff();
 
     while (window_open()) {
         // Handle input and draw updated values
         window_update_wait();
-        std::vector<double> rawVertices{analyzer->getVertices()};
+        std::vector<double> rawVertices{structure->getVertices()};
         std::vector<float> vertices(rawVertices.size());
         std::transform (rawVertices.begin(), rawVertices.end(), vertices.begin(), [](double v){ return 2*v/viewWidth;});
         graphics_draw(vertices);

@@ -10,7 +10,7 @@ struct ElementProperties {
 class BeamElement {
 private:
     const Eigen::Vector2d beamVector;
-    const double beamlength;
+    const double beamLength;
     double lengthDeformation = 0;
     const Eigen::Vector2d beamUnitVector;
     const Eigen::Vector2d beamUnitNormalVector;
@@ -21,10 +21,13 @@ private:
     Eigen::Matrix<double, 6, 1> innerForces;
 
     const Eigen::Matrix<double, 6, 6> localStiffness;
+
     const Eigen::Matrix<double, 6, 6>
     calculateLocalStiffness(double L, double E, double A, double I) const;
     Eigen::Vector2d calculateNodeUnitVector(double nodeAngle) const;
     Eigen::Matrix<double, 6, 6> calculateLocalToGlobalRotationMatrix() const;
+    Eigen::Matrix<double, 6, 6> calculateMaterialStiffness() const;
+    Eigen::Matrix<double, 6, 6> calculateGeometricStiffness() const;
 public:
     const unsigned int index;
     Eigen::Matrix<double, 6, 6> localToGlobalRotationMatrix;
@@ -32,20 +35,18 @@ public:
     BeamElement (const Eigen::Vector2d &firstCoordinate, const Eigen::Vector2d &secondCoordinate,
                              const ElementProperties &properties, const unsigned int index) :
             beamVector(secondCoordinate - firstCoordinate),
-            beamlength(std::sqrt(beamVector.transpose() * beamVector)),
+            beamLength(std::sqrt(beamVector.transpose() * beamVector)),
             index(index),
-            beamUnitVector(beamVector/beamlength),
+            beamUnitVector(beamVector/beamLength),
             deformedBeamUnitTangent(beamUnitVector),
             beamUnitNormalVector(-beamUnitVector(1), beamUnitVector(0)),
-            localStiffness(calculateLocalStiffness(beamlength, properties.youngsModulus, properties.crossSectionArea, properties.momentOfIntertia)),
+            localStiffness(calculateLocalStiffness(beamLength, properties.youngsModulus, properties.crossSectionArea, properties.momentOfIntertia)),
             localToGlobalRotationMatrix(calculateLocalToGlobalRotationMatrix())
             {}
 
     void updateDeformation(const Eigen::Matrix<double, 6, 1> &displacement);
     Eigen::Matrix<double, 6, 1> calculateInnerForces() ;
 
-    Eigen::Matrix<double, 6, 6> calculateMaterialStiffness() const;
-    Eigen::Matrix<double, 6, 6> calculateGeometricStiffness() const;
     Eigen::Matrix<double, 6, 6> calculateTotalStiffness() const;
 
 };

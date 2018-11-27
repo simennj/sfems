@@ -1,4 +1,3 @@
-#include "linear.hpp"
 #include <iostream>
 #include "BeamElement.hpp"
 
@@ -64,7 +63,7 @@ void BeamElement::updateDeformation(const Eigen::Matrix<double, 6, 1> &displacem
     };
     auto deformedBeamVector = beamVector + deformationVector;
     auto deformedBeamLength = std::sqrt(deformedBeamVector.transpose() * deformedBeamVector);
-    lengthDeformation = deformedBeamLength-beamlength;//(std::pow(deformedBeamLength, 2) - std::pow(beamlength, 2))/(deformedBeamLength+beamlength); // More numerically stable than simple subtraction, ref: M. A. Crisfield. Non-linear Finite Element Analysis of Solids and Structures – Vol 1. John Wiley & Sons Ltd., Chichester, England, 1991.
+    lengthDeformation = deformedBeamLength-beamLength;
 
     deformedBeamUnitTangent = deformedBeamVector/deformedBeamLength; // e_1
 
@@ -74,17 +73,17 @@ void BeamElement::updateDeformation(const Eigen::Matrix<double, 6, 1> &displacem
 }
 
 Eigen::Matrix<double, 6, 6> BeamElement::calculateGeometricStiffness() const {
-    auto L = beamlength + lengthDeformation;
+    auto L = beamLength + lengthDeformation;
     auto N = innerForces(3);
     auto V = innerForces(4);
-    Eigen::Matrix<double, 3, 3> asdf;
-    asdf << 0,        -V/(2*L), 0,
+    Eigen::Matrix<double, 3, 3> quadrant;
+    quadrant << 0,        -V/(2*L), 0,
             -V/(2*L),  N/L,     0,
             0,         0,       0;
     Eigen::Matrix<double, 6, 6> geometricStiffness;
-    geometricStiffness <<  asdf, -asdf,
-                          -asdf,  asdf;
-    return geometricStiffness;
+    geometricStiffness <<  quadrant, -quadrant,
+                          -quadrant,  quadrant;
+    return localToGlobalRotationMatrix * geometricStiffness * localToGlobalRotationMatrix.transpose();
 }
 
 Eigen::Matrix<double, 6, 6> BeamElement::calculateTotalStiffness() const {

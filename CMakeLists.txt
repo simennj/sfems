@@ -21,7 +21,7 @@ add_executable(sfems
         src/graphics/shaderUtils.cpp
 
         glad/src/glad.c
-        src/graphics/curve.cpp src/graphics/curve.hpp src/utils/arch.cpp src/utils/arch.hpp src/calculations/linear.cpp src/calculations/linear.hpp src/utils/logFunctions.cpp src/utils/logFunctions.hpp src/calculations/analyzer.cpp src/calculations/BeamElement.cpp src/calculations/corotational.cpp src/calculations/corotational.hpp src/calculations/iterator.cpp src/calculations/iterator.hpp src/calculations/asdf.cpp src/calculations/asdf.hpp)
+        src/graphics/curve.cpp src/graphics/curve.hpp src/utils/arch.cpp src/utils/arch.hpp src/calculations/structure.cpp src/calculations/BeamElement.cpp src/calculations/logger.cpp src/calculations/logger.hpp)
 
 target_link_libraries (sfems
         Eigen3::Eigen
