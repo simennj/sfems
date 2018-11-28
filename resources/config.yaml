@@ -27,10 +27,10 @@ boundaryConditions:
   - globalDegreeOfFreedom: -3
     value: 0
 iterator:
-  type: newton
-#  type: arclength
+#  type: newton
+  type: arclength
   increments: 10
-#  stepSize: 75
+  stepSize: 75
   tolerance: 1e-6
   maxIterationsPerIncrement: 200
 logging:

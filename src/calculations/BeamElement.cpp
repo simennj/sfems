@@ -17,12 +17,12 @@ const Eigen::Matrix<double, 6, 6>
 BeamElement::calculateLocalStiffness(const double L, const double E, const double A, const double I) const {
     Eigen::Matrix<double, 6, 6> localStiffness;
     localStiffness <<
-    E*A/L,       0,            0,            -E*A/L,      0,               0,
-      0,   12*E*I/pow(L,3),   6*E*I/pow(L,2),  0,   -12*E*I/pow(L,3),  6*E*I/pow(L,2),
-      0,   6*E*I/pow(L,2),    4*E*I/L,         0,   -6*E*I/pow(L,2),   2*E*I/L,
-    -E*A/L,      0,            0,             E*A/L,      0,               0,
-      0,   -12*E*I/pow(L,3), -6*E*I/pow(L,2),  0,   12*E*I/pow(L,3),  -6*E*I/pow(L,2),
-      0,   6*E*I/pow(L,2),    2*E*I/L,         0,   -6*E*I/pow(L,2),   4*E*I/L;
+     E*A/L,  0,                0,              -E*A/L,  0,                0,
+     0,      12*E*I/pow(L,3),  6*E*I/pow(L,2),  0,     -12*E*I/pow(L,3),  6*E*I/pow(L,2),
+     0,      6*E*I/pow(L,2),   4*E*I/L,         0,     -6*E*I/pow(L,2),   2*E*I/L,
+    -E*A/L,  0,                0,               E*A/L,  0,                0,
+     0,     -12*E*I/pow(L,3), -6*E*I/pow(L,2),  0,      12*E*I/pow(L,3), -6*E*I/pow(L,2),
+     0,      6*E*I/pow(L,2),   2*E*I/L,         0,     -6*E*I/pow(L,2),   4*E*I/L;
     return localStiffness;
 }
 
@@ -36,7 +36,7 @@ Eigen::Vector2d BeamElement::calculateNodeUnitVector(double nodeAngle) const {
 }
 
 Eigen::Matrix<double, 6, 6> BeamElement::calculateMaterialStiffness() const {
-    Eigen::Matrix<double, 6, 6> globalStiffness {
+    Eigen::Matrix<double, 6, 6> globalStiffness{
             localToGlobalRotationMatrix * localStiffness * localToGlobalRotationMatrix.transpose()
     };
     return globalStiffness;
@@ -46,11 +46,11 @@ Eigen::Matrix<double, 6, 1> BeamElement::calculateInnerForces() {
     Eigen::Vector2d deformationUnitNormal;
     deformationUnitNormal << -deformedBeamUnitTangent(1), deformedBeamUnitTangent(0);
 
-    auto theta1 = std::asin(nodeOneVector.transpose()*deformationUnitNormal);
-    auto theta2 = std::asin(nodeTwoVector.transpose()*deformationUnitNormal);
+    auto theta1 = std::asin(nodeOneVector.transpose() * deformationUnitNormal);
+    auto theta2 = std::asin(nodeTwoVector.transpose() * deformationUnitNormal);
 
     Eigen::Matrix<double, 6, 1> localDeformation;
-    localDeformation << -lengthDeformation/2, 0, theta1, lengthDeformation/2, 0, theta2;
+    localDeformation << -lengthDeformation / 2, 0, theta1, lengthDeformation / 2, 0, theta2;
     innerForces = localStiffness * localDeformation;
     Eigen::Matrix<double, 6, 1> forces = localToGlobalRotationMatrix * innerForces;
     return forces;
@@ -63,9 +63,9 @@ void BeamElement::updateDeformation(const Eigen::Matrix<double, 6, 1> &displacem
     };
     auto deformedBeamVector = beamVector + deformationVector;
     auto deformedBeamLength = std::sqrt(deformedBeamVector.transpose() * deformedBeamVector);
-    lengthDeformation = deformedBeamLength-beamLength;
+    lengthDeformation = deformedBeamLength - beamLength;
 
-    deformedBeamUnitTangent = deformedBeamVector/deformedBeamLength; // e_1
+    deformedBeamUnitTangent = deformedBeamVector / deformedBeamLength; // e_1
 
     nodeOneVector = calculateNodeUnitVector(displacement(2));
     nodeTwoVector = calculateNodeUnitVector(displacement(5));
@@ -77,12 +77,14 @@ Eigen::Matrix<double, 6, 6> BeamElement::calculateGeometricStiffness() const {
     auto N = innerForces(3);
     auto V = innerForces(4);
     Eigen::Matrix<double, 3, 3> quadrant;
-    quadrant << 0,        -V/(2*L), 0,
+    quadrant <<
+             0,       -V/(2*L), 0,
             -V/(2*L),  N/L,     0,
-            0,         0,       0;
+             0,        0,       0;
     Eigen::Matrix<double, 6, 6> geometricStiffness;
-    geometricStiffness <<  quadrant, -quadrant,
-                          -quadrant,  quadrant;
+    geometricStiffness <<
+             quadrant, -quadrant,
+            -quadrant,  quadrant;
     return localToGlobalRotationMatrix * geometricStiffness * localToGlobalRotationMatrix.transpose();
 }
 

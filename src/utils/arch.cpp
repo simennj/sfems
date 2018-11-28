@@ -1,5 +1,4 @@
 #include <vector>
-#include <cmath>
 #include "arch.hpp"
 
 std::vector<double> calculateArch(unsigned int element_count, CurveExpression *expression) {
@@ -15,10 +14,10 @@ std::vector<double> calculateArch(unsigned int element_count, CurveExpression *e
 };
 
 std::pair<double, double> CircleExpression::getPoint(double percent) {
-    auto angle = totalAngle - percent*totalAngle+startAngle;
+    auto angle = totalAngle - percent * totalAngle + startAngle;
     return std::make_pair(
             radius * std::cos(angle),
-            radius * std::sin(angle)-(radius-height/2)
+            radius * std::sin(angle) - (radius - height / 2)
     );
 }
 

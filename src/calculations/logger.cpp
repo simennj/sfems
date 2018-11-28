@@ -1,9 +1,7 @@
 #include "logger.hpp"
-#include <iostream>
-#include <iomanip>
-#include <fstream>
 
-void Logger::logPrediction(const Eigen::VectorXd &displacement, double loadingParameter, const Eigen::VectorXd &deltaDisplacement,
+void Logger::logPrediction(const Eigen::VectorXd &displacement, double loadingParameter,
+                           const Eigen::VectorXd &deltaDisplacement,
                            double deltaLoadingParameter) {
     predictorPoints << displacement(relevantDegreeOfFreedom) << " " << loadingParameter << " "
                     << deltaDisplacement(relevantDegreeOfFreedom) << " " << deltaLoadingParameter << std::endl;
@@ -13,7 +11,7 @@ void Logger::logCorrection(const Eigen::VectorXd &displacement, double loadingPa
                            const Eigen::VectorXd &deltaDisplacement,
                            double deltaLoadingParameter) {
     correctorPoints << displacement(relevantDegreeOfFreedom) << " " << loadingParameter << " "
-                     << deltaDisplacement(relevantDegreeOfFreedom) << " " << deltaLoadingParameter << std::endl;
+                    << deltaDisplacement(relevantDegreeOfFreedom) << " " << deltaLoadingParameter << std::endl;
 }
 
 void Logger::logPoint(const Eigen::VectorXd &displacement, double loadingParameter) {

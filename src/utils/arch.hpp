@@ -2,7 +2,7 @@
 #define SFEMS_ARCH_HPP
 
 #include <vector>
-#include <math.h>
+#include <cmath>
 
 class CurveExpression { // Memory leak?
 public:
@@ -21,8 +21,8 @@ public:
     explicit CircleExpression(double radius, double height) :
             radius(radius),
             height(height),
-            totalAngle(2*acos((radius - height) / radius)),
-            startAngle((M_PI-totalAngle)/2.0f) {}
+            totalAngle(2 * acos((radius - height) / radius)),
+            startAngle((M_PI - totalAngle) / 2.0f) {}
 
     std::pair<double, double> getPoint(double percent) override;
 };
@@ -33,8 +33,7 @@ private:
     const double height;
 public:
     explicit LineExpression(const double length, const double height)
-            : length(length), height(height)
-    {}
+            : length(length), height(height) {}
 
     std::pair<double, double> getPoint(double percent) override;
 };

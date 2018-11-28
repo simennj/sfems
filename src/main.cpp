@@ -9,8 +9,7 @@
 #include "calculations/structure.hpp"
 
 extern "C" {
-    #include <time.h>
-    #include "graphics/window_util.h"
+#include "graphics/window_util.h"
 }
 
 double initialViewWidth;
@@ -29,8 +28,8 @@ std::unique_ptr<Structure> loadStuff() {
     YAML::Node config = YAML::LoadFile("config.yaml");
 
     auto curveConfig = config["curve"];
-    CurveExpression* expression;
-    if (curveConfig["type"].as<std::string>() == "arch"){
+    CurveExpression *expression;
+    if (curveConfig["type"].as<std::string>() == "arch") {
         expression = new CircleExpression(
                 curveConfig["radius"].as<double>(),
                 curveConfig["height"].as<double>());
@@ -43,17 +42,17 @@ std::unique_ptr<Structure> loadStuff() {
     auto vertices = calculateArch(elementCount, expression);
     delete expression;
     auto properties = ElementProperties{
-                        config["youngsModulus"].as<double>(),
-                        config["crossSectionArea"].as<double>(),
-                        config["momentOfIntertia"].as<double>()
-                };
-    int degreesOfFreedom = (elementCount+1)*3;
+            config["youngsModulus"].as<double>(),
+            config["crossSectionArea"].as<double>(),
+            config["momentOfIntertia"].as<double>()
+    };
+    int degreesOfFreedom = (elementCount + 1) * 3;
     std::vector<BoundaryCondition> boundaryConditions{};
     for (auto boundaryCondition : config["boundaryConditions"]) {
-        int degreeOfFreedom = boundaryCondition["globalDegreeOfFreedom"].as<int>();
+        auto degreeOfFreedom = boundaryCondition["globalDegreeOfFreedom"].as<int>();
         boundaryConditions.push_back(BoundaryCondition{
-            degreeOfFreedom < 0 ? degreesOfFreedom + degreeOfFreedom : degreeOfFreedom,
-            boundaryCondition["value"].as<double>()
+                degreeOfFreedom < 0 ? degreesOfFreedom + degreeOfFreedom : degreeOfFreedom,
+                boundaryCondition["value"].as<double>()
         });
     }
 
@@ -61,7 +60,7 @@ std::unique_ptr<Structure> loadStuff() {
     for (auto forceNode : config["force"]) {
         int node;
         if (forceNode["node"].as<std::string>() == "middle") {
-            node = elementCount/2;
+            node = elementCount / 2;
         } else {
             node = forceNode["node"].as<int>();
         }
@@ -81,7 +80,7 @@ std::unique_ptr<Structure> loadStuff() {
 
     unsigned int nodeToLog;
     if (config["logging"]["node"].as<std::string>() == "middle")
-        nodeToLog = elementCount/2;
+        nodeToLog = elementCount / 2;
     else
         nodeToLog = config["logging"]["node"].as<unsigned int>();
     Logger logger = Logger(nodeToLog, config["logging"]["degreeOfFreedom"].as<unsigned int>());
@@ -95,7 +94,7 @@ std::unique_ptr<Structure> loadStuff() {
     if (iteratorConfig["stepSize"].IsDefined())
         stepSize = iteratorConfig["stepSize"].as<double>();
     else
-        stepSize = 1.0/increments;
+        stepSize = 1.0 / increments;
 
     return std::make_unique<Structure>(vertices, properties, boundaryConditions, forceVector, std::move(logger));
 }
@@ -127,7 +126,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
                                std::abs<double>);
 
                 viewWidth = initialViewWidth =
-                        *std::max_element(vertices.begin(), vertices.end())*2;
+                        *std::max_element(vertices.begin(), vertices.end()) * 2;
                 break;
             }
             case GLFW_KEY_I: {
@@ -143,10 +142,10 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
                 break;
             }
             case GLFW_KEY_MINUS:
-                viewWidth += initialViewWidth/20;
+                viewWidth += initialViewWidth / 20;
                 break;
             case GLFW_KEY_EQUAL:
-                viewWidth -= initialViewWidth/20;
+                viewWidth -= initialViewWidth / 20;
             default:
                 break;
         }
@@ -168,7 +167,8 @@ int main(int argc, char **argv) {
         window_update_wait();
         std::vector<double> rawVertices{structure->getVertices()};
         std::vector<float> vertices(rawVertices.size());
-        std::transform (rawVertices.begin(), rawVertices.end(), vertices.begin(), [](double v){ return 2*v/viewWidth;});
+        std::transform(rawVertices.begin(), rawVertices.end(), vertices.begin(),
+                       [](double v) { return 2 * v / viewWidth; });
         graphics_draw(vertices);
     }
     return 0;

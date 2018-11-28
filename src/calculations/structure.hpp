@@ -15,7 +15,9 @@ struct BoundaryCondition {
     double value;
 };
 
-enum class ForceType {GLOBAL, LOCAL};
+enum class ForceType {
+    GLOBAL, LOCAL
+};
 
 struct Force {
     ForceType forceType;
@@ -48,7 +50,7 @@ class Structure {
 
     bool newtonIterations(double tolerance, int maxIterations);
 
-    Eigen::VectorXd calculateInnerForces() ;
+    Eigen::VectorXd calculateInnerForces();
 
     void update();
 
@@ -70,8 +72,7 @@ public:
             boundaryConditions(std::move(boundaryConditions)),
             lastDeltaDisplacement(Eigen::VectorXd::Zero(degreesOfFreedom)),
             innerForces(Eigen::VectorXd::Zero(degreesOfFreedom)),
-            logger(std::move(logger))
-    {
+            logger(std::move(logger)) {
         elements.reserve(vertices.size() / 2);
         for (int i = 0; i < vertices.size() - 2; i += 2) {
             elements.push_back(BeamElement{
@@ -82,17 +83,18 @@ public:
             });
         }
         update();
-        for (auto force : forces){
+        for (auto force : forces) {
             if (force.forceType == ForceType::GLOBAL)
-                nominalGlobalLoad(force.node*3+force.degreeOfFreedom) = force.magnitude;
+                nominalGlobalLoad(force.node * 3 + force.degreeOfFreedom) = force.magnitude;
             else if (force.forceType == ForceType::LOCAL)
-                nominalLocalLoad(force.node*3+force.degreeOfFreedom) = force.magnitude;
+                nominalLocalLoad(force.node * 3 + force.degreeOfFreedom) = force.magnitude;
         }
     }
 
     std::vector<double> getVertices();
 
     bool newton(double stepSize, double tolerance, int maxIterations);
+
     bool arcLength(double stepSize, double tolerance, int maxIterations);
 
 };

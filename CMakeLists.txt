@@ -13,17 +13,21 @@ include_directories(glad/include)
 add_executable(sfems
         src/main.cpp
 
-        src/utils/clamp.c
         src/utils/fileUtils.cpp
         src/graphics/ui.cpp
         src/graphics/graphics.cpp
         src/graphics/window_util.c
         src/graphics/shaderUtils.cpp
+        src/graphics/curve.cpp
+        src/utils/arch.cpp
+        src/calculations/structure.cpp
+        src/calculations/BeamElement.cpp
+        src/calculations/logger.cpp
 
         glad/src/glad.c
-        src/graphics/curve.cpp src/graphics/curve.hpp src/utils/arch.cpp src/utils/arch.hpp src/calculations/structure.cpp src/calculations/BeamElement.cpp src/calculations/logger.cpp src/calculations/logger.hpp)
+        )
 
-target_link_libraries (sfems
+target_link_libraries(sfems
         Eigen3::Eigen
         yaml-cpp
         glfw

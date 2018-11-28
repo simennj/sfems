@@ -1,10 +1,7 @@
 #include <vector>
-#include <glad/glad.h>
 #include "curve.hpp"
 #include "shaderUtils.hpp"
-extern "C" {
-#include "../utils/clamp.h"
-}
+
 // Define amount of coordinates per vertex
 #define VERTEX_COORDINATE_COUNT 2
 
@@ -26,7 +23,7 @@ void curve_init() {
     glBindVertexArray(curveVertexArray);
     glGenBuffers(1, &curveVertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, curveVertexBuffer);
-    glVertexAttribPointer(0, VERTEX_COORDINATE_COUNT, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(0, VERTEX_COORDINATE_COUNT, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(0);
 }
 
@@ -50,8 +47,8 @@ void curve_draw(const std::vector<GLfloat> &vertices) {
     glBindVertexArray(curveVertexArray);
 
     // Sets the color to be the first of the colors defined in the shader
-    int coordinates_count = static_cast<int>(vertices.size());
-    int vertices_count = coordinates_count/VERTEX_COORDINATE_COUNT;
+    auto coordinates_count = static_cast<int>(vertices.size());
+    int vertices_count = coordinates_count / VERTEX_COORDINATE_COUNT;
     glUniform1i(2, 0);
     glDrawArrays(GL_LINE_STRIP, 0, vertices_count);
     glUniform1i(2, 1);
